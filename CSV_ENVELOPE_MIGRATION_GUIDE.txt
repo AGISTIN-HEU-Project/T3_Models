@@ -1,0 +1,155 @@
+% WeiWei Scripts - CSV Envelope Migration Guide
+% ============================================
+%
+% SUMMARY OF CHANGES
+% ==================
+% The WeiWei test scripts have been modified to read envelope data from 
+% DyCoV CSV files instead of Excel files. This improves portability and 
+% reduces dependencies on Excel libraries.
+%
+% MODIFIED FILES
+% ==============
+% 1. read_dycov_envelope.m  (NEW)
+%    - Helper function to read DyCoV-generated envelope CSV files
+%    - Automatically handles semicolon delimiter and column extraction
+%
+% 2. run_TestCase_S_AmpStep_OC1_wws.m
+%    - REMOVED: Excel file dependencies (xlsread, xlswrite)
+%    - REMOVED: Directory navigation (cd ./envelops_wws)
+%    - ADDED: CSV path configuration using fullfile()
+%    - ADDED: Error handling for missing CSV files
+%    - Reads Q (reactive power) envelope limits
+%
+% 3. run_TestCase_S_Rocof1_OC1_wws.m
+%    - REMOVED: Excel file dependencies (xlsread, xlswrite)
+%    - REMOVED: Directory navigation
+%    - ADDED: CSV path configuration for S_Rocof test
+%    - Reads P (active power) envelope limits
+%
+% 4. run_TestCase_S_VolAngStep4_OC1_wws.m
+%    - REMOVED: Excel file dependencies (xlsread, xlswrite)
+%    - REMOVED: Directory navigation
+%    - ADDED: CSV path configuration for S_VolAngStep test
+%    - Reads P (active power) envelope limits
+%
+% 5. NEW_TestCase_S_AmpStep_OC1_wws.m
+%    - REMOVED: Excel file dependencies
+%    - ADDED: CSV path configuration (same as #2 but uses VSM_standalone_23a.slx)
+%
+%
+% HOW TO USE
+% ==========
+%
+% 1. BASIC USAGE (No changes needed)
+%    - Run any of the test scripts as before
+%    - The scripts will now read envelopes from DyCoV CSV files
+%    - Default paths point to Overdamped test cases
+%
+% 2. CUSTOMIZE ENVELOPE SOURCE
+%    Each script contains a configurable path like:
+%
+%    dycov_envelope_path = fullfile(pwd, '..', 'dyn-grid-compliance-verification', ...
+%        'docs', 'GFM_envelopes_curves', 'Envelopes', 'Overdamped', ...
+%        'PCS_RTE-IGFM1', 'S_VolAngStep2', 'OC1', ...
+%        'PCS_RTE-IGFM1.S_VolAngStep2.OC1.csv');
+%
+%    To use a different test case, modify:
+%    - 'Overdamped' -> 'Underdamped'  (or vice versa)
+%    - 'PCS_RTE-IGFM1' -> 'PCS_RTE-IGFM2', 'PCS_RTE-IGFM3', etc.
+%    - 'S_VolAngStep2' -> 'S_Rocof1', 'S_PhaseJump', etc.
+%    - 'OC1' -> 'OC2', 'OC3', 'OC4', 'OC5'
+%    - Update the filename accordingly
+%
+% 3. AVAILABLE ENVELOPE LOCATIONS
+%    Base path: ../dyn-grid-compliance-verification/docs/GFM_envelopes_curves/Envelopes/
+%
+%    Damping types:
+%    - Overdamped/
+%    - Underdamped/
+%
+%    Producers (examples):
+%    - PCS_RTE-IGFM1
+%    - PCS_RTE-IGFM2
+%    - PCS_RTE-IGFM3
+%    - PCS_RTE-IGFM4
+%    (and others)
+%
+%    Test cases:
+%    - S_VolAngStep1, S_VolAngStep2, etc. (Voltage angle step tests)
+%    - S_Rocof1 (Rate of Change of Frequency tests)
+%    - S_PhaseJump (Phase jump tests)
+%    (and others)
+%
+%    Operating conditions:
+%    - OC1, OC2, OC3, OC4, OC5
+%
+%
+% CSV FILE FORMAT
+% ===============
+% DyCoV envelope CSV files use semicolon (;) as delimiter:
+%
+%   Time (s);P PCC (pu);P lower (pu);P upper (pu)
+%   0.000e+00;8.000e-01;5.014e-01;9.186e-01
+%   1.667e-03;8.000e-01;5.014e-01;9.186e-01
+%   ...
+%
+% The read_dycov_envelope() function extracts:
+%   - Column 1: Time in seconds
+%   - Column 3: Lower envelope limit (lower constraint)
+%   - Column 4: Upper envelope limit (upper constraint)
+%
+% Note: For reactive power envelopes, columns may be labeled "Q" instead of "P",
+%       but the structure remains the same.
+%
+%
+% MAPPING OF TEST SCRIPTS TO ENVELOPE TYPES
+% ==========================================
+%
+% Script                                  | Envelope Type | Default CSV
+% ========================================|===============|================
+% run_TestCase_S_AmpStep_OC1_wws.m       | Q (reactive)  | S_VolAngStep2/OC1
+% NEW_TestCase_S_AmpStep_OC1_wws.m       | Q (reactive)  | S_VolAngStep2/OC1
+% run_TestCase_S_Rocof1_OC1_wws.m        | P (active)    | S_Rocof1/OC1
+% run_TestCase_S_VolAngStep4_OC1_wws.m   | P (active)    | S_VolAngStep2/OC1
+%
+% Note: You can customize the envelope source by modifying the 
+%       dycov_envelope_path variable in each script. The data type 
+%       (P or Q) depends on which CSV file you select.
+%
+%
+% TROUBLESHOOTING
+% ===============
+%
+% Error: "File not found: ..."
+%   - Check that the path in dycov_envelope_path is correct
+%   - Verify that the CSV file exists in the DyCoV installation
+%   - Check relative path: verify that ../dyn-grid-compliance-verification
+%     points to the correct DyCoV project location
+%
+% Error: "Failed to load envelope CSV file"
+%   - Check CSV file delimiter (should be semicolon)
+%   - Verify CSV has at least 4 columns (Time, nominal, lower, upper)
+%   - Ensure read_dycov_envelope.m function is in the MATLAB path
+%
+% Data mismatch:
+%   - If envelope bounds seem incorrect, verify you're using the right test case
+%   - Check that Q/P limits are being read from the correct CSV file
+%   - Review the CSV column order in read_dycov_envelope.m if needed
+%
+%
+% BACKWARDS COMPATIBILITY
+% =======================
+% The modified scripts are NOT backwards compatible with Excel files.
+% If you need to use Excel files:
+%   1. Keep a backup of the original scripts
+%   2. Or implement custom xlsread() wrappers around the CSV reading function
+%
+%
+% FUTURE ENHANCEMENTS
+% ====================
+% Possible improvements:
+% - Add automatic test case selection based on simulation parameters
+% - Cache envelope data in MATLAB structures for faster execution
+% - Add envelope interpolation for custom grid parameters
+% - Create a configuration file for managing multiple envelope sources
+%
