@@ -33,7 +33,7 @@ P0         = 0;
 %% grid properties
 
 Test.x_trafo_pu = 0.05;
-Test.x_grid1 = 0.1; %% SCR = 10, value of x_grid1 should be always larger than x_grid2 for initalization
+Test.x_grid1 = 0.1; %% SCR = 10, value in x_grid1 should be always larger than x_grid2 for initalization
 Test.r_grid1 = 0.02;
 Test.x_grid2 = 0.1; %% SCR = 2 or 10;
 Test.r_grid2 = 0.05;
@@ -64,14 +64,14 @@ end
 % NOTE: Using VolAmpStep1 from IGFM2 as equivalent to AmpStep
 % AmpStep tests are not available for PCS_RTE-IGFM1, but VolAmpStep1 (IGFM2) is used instead
 
-if isfield(Test, 'Qlim') && isstruct(Test.Qlim)
-    % Qlim already loaded from saved .mat file
-    fprintf('Using existing Qlim data from loaded file.\n');
-else
+% if isfield(Test, 'Qlim') && isstruct(Test.Qlim)
+%     % Qlim already loaded from saved .mat file
+%     fprintf('Using existing Qlim data from loaded file.\n');
+% else
     % Try to read from dycov CSV file - using VolAmpStep1 as AmpStep equivalent
-    dycov_envelope_path = fullfile(pwd, '..', 'dyn-grid-compliance-verification', ...
-        'docs', 'GFM_envelopes_curves', 'Envelopes', 'Overdamped', ...
-        'PCS_RTE-IGFM2', 'S_VolAmpStep1', 'OC1', ...
+    dycov_envelope_path = fullfile(pwd,'dyn-grid-compliance-verification',...
+        'docs','GFM_envelopes_curves','Envelopes','Overdamped',...
+        'PCS_RTE-IGFM2','S_VolAmpStep1','OC1',...
         'PCS_RTE-IGFM2.S_VolAmpStep1.OC1.csv');
     
     if isfile(dycov_envelope_path)
@@ -90,7 +90,7 @@ else
         Test.Qlim.q_up = ones(size(Test.Qlim.t)) * 1.5;
         Test.Qlim.q_down = ones(size(Test.Qlim.t)) * (-1.5);
     end
-end
+% end
 
 %% Optional: Envelope properties (for reference)
 % These were previously written to Excel for envelope tuning
@@ -100,7 +100,7 @@ end
 % If you need to adjust envelope limits, you can apply scaling factors here
 %% plot results
 % Only plot if we have simulation output data
-if isfield(Test, 'simout') && ~isempty(Test.simout) && isstruct(Test.simout)
+if isfield(Test, 'simout') && ~isempty(Test.simout.tout) && isstruct(Test)
     figure;
     plot_Results_Q(...
         Test.Name,...
@@ -125,11 +125,11 @@ else
 end
 
 % Save figure as PNG
-figure_filename = sprintf('%s_envelope.png', Test.Name);
-saveas(gcf, figure_filename);
-fprintf('Plot saved to: %s\n', figure_filename);
+% figure_filename = sprintf('%s_envelope.png', Test.Name);
+% saveas(gcf, figure_filename);
+% fprintf('Plot saved to: %s\n', figure_filename);
 
 %% save results
 if Test.sim
     save(Test.Name,'Test')
-end;
+end
