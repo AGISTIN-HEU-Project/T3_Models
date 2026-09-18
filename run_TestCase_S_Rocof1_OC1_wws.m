@@ -55,15 +55,15 @@ end
 % NOTE: Rocof tests are not available in dycov database for PCS_RTE-IGFM1
 % Using saved envelope limits from .mat file or placeholders
 
-if isfield(Test, 'Plim') && isstruct(Test.Plim)
-    % Plim already loaded from saved .mat file
-    fprintf('Using existing Plim data from loaded file.\n');
-else
+% if isfield(Test, 'Plim') && isstruct(Test.Plim)
+%     % Plim already loaded from saved .mat file
+%     fprintf('Using existing Plim data from loaded file.\n');
+% else
     % Try to load from dycov for IGFM4 if available
     % IGFM4 has Rocof tests available
-    dycov_envelope_path = fullfile(pwd, '..', 'dyn-grid-compliance-verification', ...
-        'docs', 'GFM_envelopes_curves', 'Envelopes', 'Underdamped', ...
-        'PCS_RTE-IGFM4', 'S_Rocof1', 'OC1', ...
+    dycov_envelope_path = fullfile(pwd,'dyn-grid-compliance-verification', ...
+        'docs','GFM_envelopes_curves','Envelopes','Underdamped', ...
+        'PCS_RTE-IGFM4', 'S_Rocof1','OC1', ...
         'PCS_RTE-IGFM4.S_Rocof1.OC1.csv');
     
     if isfile(dycov_envelope_path)
@@ -82,7 +82,7 @@ else
         Test.Plim.p_up = ones(size(Test.Plim.t)) * 1.5;
         Test.Plim.p_down = ones(size(Test.Plim.t)) * (-1.5);
     end
-end
+% end
 
 %% Optional: Envelope properties (for reference)
 % These were previously written to Excel for envelope tuning
@@ -97,7 +97,7 @@ end
 %% plot results
 
 % Only plot if we have simulation output data
-if isfield(Test, 'simout') && ~isempty(Test.simout) && isstruct(Test.simout)
+if isfield(Test,'simout') && ~isempty(Test.simout.tout)&& isstruct(Test)
     figure;
     plot_Results_P(...
         Test.Name,...
@@ -112,7 +112,7 @@ else
     % Simout not available - just plot envelope limits
     fprintf('Simulation output (simout) not available. Plotting envelope limits only.\n');
     figure;
-    plot(Test.Plim.t, Test.Plim.p_up, 'b-', 'LineWidth', 2); hold on;
+    plot(Test.Plim.t, Test.Plim.p_up, 'r--', 'LineWidth', 2); hold on;
     plot(Test.Plim.t, Test.Plim.p_down, 'r-', 'LineWidth', 2);
     xlabel('Time (s)');
     ylabel('Power (pu)');
@@ -129,4 +129,4 @@ fprintf('Plot saved to: %s\n', figure_filename);
 %% save results
 if Test.sim
     save(Test.Name,'Test')
-end;
+end
