@@ -59,17 +59,14 @@ end
 % VolAngStep4 is available in dycov for PCS_RTE-IGFM1
 % Note: OC1 is not available, using OC2 instead for testing
 
-if isfield(Test, 'Plim') && isstruct(Test.Plim)
-    % Plim already loaded from saved .mat file
-    fprintf('Using existing Plim data from loaded file.\n');
-else
+
     % Try to read from dycov CSV file
     % Using OC2 as default (OC1 not available for VolAngStep4 in IGFM1)
-    dycov_envelope_path = fullfile(pwd, '..', 'dyn-grid-compliance-verification', ...
-        'docs', 'GFM_envelopes_curves', 'Envelopes', 'Underdamped', ...
-        'PCS_RTE-IGFM1', 'S_VolAngStep4', 'OC2', ...
+    dycov_envelope_path = fullfile(pwd,'dyn-grid-compliance-verification',...
+        'docs','GFM_envelopes_curves','Envelopes','Underdamped', ...
+        'PCS_RTE-IGFM1','S_VolAngStep4','OC2',...
         'PCS_RTE-IGFM1.S_VolAngStep4.OC2.csv');
-    
+
     if isfile(dycov_envelope_path)
         try
             [Test.Plim.t, Test.Plim.p_down, Test.Plim.p_up] = read_dycov_envelope(dycov_envelope_path);
@@ -86,7 +83,7 @@ else
         Test.Plim.p_up = ones(size(Test.Plim.t)) * 1.5;
         Test.Plim.p_down = ones(size(Test.Plim.t)) * (-1.5);
     end
-end
+
 
 %% Optional: Envelope properties (for reference)
 % These were previously written to Excel for envelope tuning
@@ -99,7 +96,7 @@ end
 % If you need to adjust envelope limits, you can apply scaling factors here
 %% plot results
 % Only plot if we have simulation output data
-if isfield(Test, 'simout') && ~isempty(Test.simout) && isstruct(Test.simout)
+if isfield(Test,'simout') && ~isempty(Test.simout.tout) && isstruct(Test)
     figure;
     plot_Results_P(...
         Test.Name,...
@@ -131,4 +128,4 @@ fprintf('Plot saved to: %s\n', figure_filename);
 %% save results
 if Test.sim
     save(Test.Name,'Test')
-end;
+end
