@@ -1,0 +1,198 @@
+% BEFORE and AFTER: Code Changes Summary
+% =======================================
+%
+% This document shows side-by-side comparisons of the old (Excel-based) 
+% and new (CSV-based) envelope reading approach.
+%
+%
+% ============================================================================
+% EXAMPLE 1: Reactive Power (Q) Envelope Reading - S_AmpStep Test
+% ============================================================================
+%
+% BEFORE (Excel-based):
+% ---------------------
+% cd ./envelops_wws
+% 
+% Test.EnvFile = 'FICHEIX.2GFM behavior (amplitude step)_wws.xlsm';
+% Test.EnvSheet = 'Amplitude Jump'
+% 
+% Q0 = 0;
+% SCR = 1 /Test.x_grid2;
+% Xtr = Test.x_trafo_pu
+% 
+% xlswrite(Test.EnvFile, Q0, Test.EnvSheet, 'H5');
+% xlswrite(Test.EnvFile, SCR, Test.EnvSheet, 'H4');
+% xlswrite(Test.EnvFile, Xtr, Test.EnvSheet, 'H7');
+% xlswrite(Test.EnvFile, X_inv, Test.EnvSheet, 'H6');
+% 
+% Test.Qlim.q_up = xlsread(Test.EnvFile, Test.EnvSheet, 'F5:F267');
+% Test.Qlim.q_down = xlsread(Test.EnvFile, Test.EnvSheet, 'E5:E267');
+% Test.Qlim.t = xlsread(Test.EnvFile, Test.EnvSheet, 'A5:A267');
+% 
+% cd ..
+%
+% AFTER (CSV-based):
+% ------------------
+% dycov_envelope_path = fullfile(pwd, '..', 'dyn-grid-compliance-verification', ...
+%     'docs', 'GFM_envelopes_curves', 'Envelopes', 'Overdamped', ...
+%     'PCS_RTE-IGFM1', 'S_VolAngStep2', 'OC1', ...
+%     'PCS_RTE-IGFM1.S_VolAngStep2.OC1.csv');
+% 
+% try
+%     [Test.Qlim.t, Test.Qlim.q_down, Test.Qlim.q_up] = read_dycov_envelope(dycov_envelope_path);
+%     fprintf('Successfully loaded envelope from: %s\n', dycov_envelope_path);
+% catch ME
+%     error('Failed to load envelope CSV file.\nPath: %s\nError: %s', dycov_envelope_path, ME.message);
+% end
+%
+% KEY DIFFERENCES:
+% 1. No Excel file dependencies (xlsread, xlswrite)
+% 2. No directory navigation (cd ./envelops_wws)
+% 3. Full path specification using fullfile() for portability
+% 4. Error handling with try-catch
+% 5. Single function call instead of multiple xlsread() operations
+%
+%
+% ============================================================================
+% EXAMPLE 2: Active Power (P) Envelope Reading - S_Rocof Test
+% ============================================================================
+%
+% BEFORE (Excel-based):
+% ---------------------
+% cd ./envelops_wws
+% 
+% Test.EnvFile = 'FICHEIX.3GFM behavior (inertia)_wws.xlsm';
+% Test.EnvSheet = 'Rocof';
+% 
+% writematrix(P0,Test.EnvFile,'Range','AB6');
+% writematrix(SCR,Test.EnvFile,'Range','AB7');
+% writematrix(D,Test.EnvFile,'Range','AB8');
+% writematrix(H,Test.EnvFile,'Range','AB9');
+% writematrix(Xtr,Test.EnvFile,'Range','AB10');
+% writematrix(Rocof_pu,Test.EnvFile,'Range','AB20');
+% 
+% Test.Plim.p_up = xlsread(Test.EnvFile, Test.EnvSheet, 'X7:X1495');
+% Test.Plim.p_down = xlsread(Test.EnvFile, Test.EnvSheet, 'W7:W1495');
+% Test.Plim.t = xlsread(Test.EnvFile, Test.EnvSheet, 'A7:A1495');
+% 
+% cd ..
+%
+% AFTER (CSV-based):
+% ------------------
+% dycov_envelope_path = fullfile(pwd, '..', 'dyn-grid-compliance-verification', ...
+%     'docs', 'GFM_envelopes_curves', 'Envelopes', 'Overdamped', ...
+%     'PCS_RTE-IGFM1', 'S_Rocof1', 'OC1', ...
+%     'PCS_RTE-IGFM1.S_Rocof1.OC1.csv');
+% 
+% try
+%     [Test.Plim.t, Test.Plim.p_down, Test.Plim.p_up] = read_dycov_envelope(dycov_envelope_path);
+%     fprintf('Successfully loaded envelope from: %s\n', dycov_envelope_path);
+% catch ME
+%     error('Failed to load envelope CSV file.\nPath: %s\nError: %s', dycov_envelope_path, ME.message);
+% end
+%
+% BENEFITS:
+% 1. CSV files are static (no runtime modifications needed)
+% 2. Reduced Excel library dependencies
+% 3. Better cross-platform compatibility (CSV files work on all systems)
+% 4. Easier to version control (CSV vs binary XLSX)
+% 5. Can leverage existing DyCoV envelope generation
+%
+%
+% ============================================================================
+% Helper Function: read_dycov_envelope.m
+% ============================================================================
+%
+% This new helper function handles all CSV reading operations:
+%
+% function [time, lower_limit, upper_limit] = read_dycov_envelope(csv_file_path)
+% 
+%     if ~isfile(csv_file_path)
+%         error('File not found: %s', csv_file_path);
+%     end
+%     
+%     opts = detectImportOptions(csv_file_path);
+%     opts.Delimiter = ';';
+%     data_table = readtable(csv_file_path, opts);
+%     
+%     time = table2array(data_table(:, 1));
+%     lower_limit = table2array(data_table(:, 3));
+%     upper_limit = table2array(data_table(:, 4));
+% end
+%
+% ADVANTAGES:
+% - Automatic handling of semicolon delimiter
+% - Robust error checking
+% - Reusable across all test scripts
+% - Easy to extend if CSV format changes
+%
+%
+% ============================================================================
+% How to Customize Envelope Source
+% ============================================================================
+%
+% To use a different envelope, modify the dycov_envelope_path variable.
+%
+% Example: Switch from Overdamped to Underdamped
+% ------------------------------------------------
+% BEFORE:
+%   'docs', 'GFM_envelopes_curves', 'Envelopes', 'Overdamped', ...
+%
+% AFTER:
+%   'docs', 'GFM_envelopes_curves', 'Envelopes', 'Underdamped', ...
+%
+%
+% Example: Switch test case
+% --------------------------
+% BEFORE (S_Rocof1):
+%   'PCS_RTE-IGFM1', 'S_Rocof1', 'OC1', ...
+%
+% AFTER (S_VolAngStep2):
+%   'PCS_RTE-IGFM1', 'S_VolAngStep2', 'OC1', ...
+%
+%
+% Example: Use different producer
+% --------------------------------
+% BEFORE:
+%   'PCS_RTE-IGFM1', ...
+%
+% AFTER:
+%   'PCS_RTE-IGFM2', ...
+%
+%
+% Example: Change operating condition
+% ------------------------------------
+% BEFORE:
+%   'OC1', 'PCS_RTE-IGFM1.S_VolAngStep2.OC1.csv'
+%
+% AFTER:
+%   'OC3', 'PCS_RTE-IGFM1.S_VolAngStep2.OC3.csv'
+%
+%
+% ============================================================================
+% Migration Checklist
+% ============================================================================
+%
+% [ ] read_dycov_envelope.m is in the HydProd_Rev03 directory
+% [ ] MATLAB path includes HydProd_Rev03
+% [ ] Test scripts run without "File not found" errors
+% [ ] Test scripts produce correct envelope bounds
+% [ ] Envelope plots match expected test case behavior
+% [ ] Path to dyn-grid-compliance-verification is correct
+% [ ] CSV file format is correct (semicolon delimited)
+%
+%
+% ============================================================================
+% Troubleshooting Checklist
+% ============================================================================
+%
+% If you encounter errors, check:
+%
+% [ ] CSV file exists at the specified path
+% [ ] Path uses correct relative/absolute references
+% [ ] CSV delimiter is semicolon (;), not comma (,)
+% [ ] CSV file is not corrupted or empty
+% [ ] MATLAB version supports readtable() with custom delimiter
+% [ ] read_dycov_envelope.m is in MATLAB path
+% [ ] Environment variable or path setup is correct
+%
